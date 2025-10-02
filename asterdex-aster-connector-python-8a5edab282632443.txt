@@ -1,0 +1,3335 @@
+Directory structure:
+└── asterdex-aster-connector-python/
+    ├── README.md
+    ├── LICENSE
+    ├── setup.cfg
+    ├── setup.py
+    ├── tox.ini
+    ├── aster/
+    │   ├── __init__.py
+    │   ├── __version__.py
+    │   ├── api.py
+    │   ├── error.py
+    │   ├── lib/
+    │   │   ├── __init__.py
+    │   │   ├── enums.py
+    │   │   └── utils.py
+    │   ├── rest_api/
+    │   │   ├── __init__.py
+    │   │   ├── account.py
+    │   │   ├── data_stream_listen_key.py
+    │   │   └── market.py
+    │   └── websocket/
+    │       ├── __init__.py
+    │       ├── aster_client_factory.py
+    │       ├── aster_client_protocol.py
+    │       ├── aster_socket_manager.py
+    │       ├── websocket_client.py
+    │       └── client/
+    │           ├── __init__.py
+    │           └── stream.py
+    ├── examples/
+    │   ├── rest_api/
+    │   │   ├── data_stream_listen_key/
+    │   │   │   ├── close_listen_key.py
+    │   │   │   ├── new_listen_key.py
+    │   │   │   └── renew_listen_key.py
+    │   │   ├── market/
+    │   │   │   ├── agg_trades.py
+    │   │   │   ├── book_ticker.py
+    │   │   │   ├── depth.py
+    │   │   │   ├── exchange_info.py
+    │   │   │   ├── funding_rate.py
+    │   │   │   ├── historical_trades.py
+    │   │   │   ├── index_price_kline.py
+    │   │   │   ├── klines.py
+    │   │   │   ├── mark_price.py
+    │   │   │   ├── mark_price_klines.py
+    │   │   │   ├── ping.py
+    │   │   │   ├── ticker_24hr_price_change.py
+    │   │   │   ├── ticker_price.py
+    │   │   │   ├── time.py
+    │   │   │   └── trades.py
+    │   │   └── trade/
+    │   │       ├── cancel_batch_orders.py
+    │   │       ├── cancel_open_orders.py
+    │   │       ├── cancel_order.py
+    │   │       ├── change_leverage.py
+    │   │       ├── change_margin_type.py
+    │   │       ├── change_multi_asset_mode.py
+    │   │       ├── change_position_mode.py
+    │   │       ├── countdown_cancel_order.py
+    │   │       ├── get_account.py
+    │   │       ├── get_account_trades.py
+    │   │       ├── get_adl_quantile.py
+    │   │       ├── get_all_orders.py
+    │   │       ├── get_balance.py
+    │   │       ├── get_commission_rate.py
+    │   │       ├── get_force_orders.py
+    │   │       ├── get_income_history.py
+    │   │       ├── get_leverage_brackets.py
+    │   │       ├── get_multi_asset_mode.py
+    │   │       ├── get_open_orders.py
+    │   │       ├── get_order.py
+    │   │       ├── get_position_margin_history.py
+    │   │       ├── get_position_mode.py
+    │   │       ├── get_position_risk.py
+    │   │       ├── modify_isolated_position_margin.py
+    │   │       ├── new_batch_order.py
+    │   │       ├── new_order.py
+    │   │       └── query_order.py
+    │   └── websocket/
+    │       ├── agg_trade.py
+    │       ├── book_ticker.py
+    │       ├── diff_book_depth.py
+    │       ├── kline.py
+    │       ├── liquidation_order.py
+    │       ├── mark_price.py
+    │       ├── mini_ticker.py
+    │       ├── partial_book_depth.py
+    │       ├── ticker.py
+    │       └── user_data.py
+    └── requirements/
+        ├── common.txt
+        ├── requirements-dev.txt
+        ├── requirements-test.txt
+        └── requirements.txt
+
+================================================
+FILE: README.md
+================================================
+# aster-connector-python
+[![Python 3.6](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+This is a lightweight library that works as a connector to [Aster Finance public API](https://github.com/asterdex/api-docs)
+
+## Installation
+
+```bash
+pip install aster-connector-python
+```
+
+## Documentation
+
+
+## RESTful APIs
+
+Usage examples:
+```python
+from aster.rest_api import Client 
+
+# Get timestamp
+client = Client()
+print(client.time())
+
+
+client = Client(key='<api_key>', secret='<api_secret>')
+
+# Get account information
+print(client.account())
+
+# Post a new order
+params = {
+    'symbol': 'BTCUSDT',
+    'side': 'SELL',
+    'type': 'LIMIT',
+    'timeInForce': 'GTC',
+    'quantity': 0.002,
+    'price': 59808
+}
+
+response = client.new_order(**params)
+print(response)
+```
+Please find `examples` folder to check for more endpoints.
+
+### Base URL
+`https://fapi.asterdex.com`
+
+### Optional parameters
+
+PEP8 suggests _lowercase with words separated by underscores_, but for this connector,
+the methods' optional parameters should follow their exact naming as in the API documentation.
+
+```python
+# Recognised parameter name
+response = client.query_order('BTCUSDT', orderListId=1)
+
+# Unrecognised parameter name
+response = client.query_order('BTCUSDT', order_list_id=1)
+```
+
+### RecvWindow parameter
+
+Additional parameter `recvWindow` is available for endpoints requiring signature.<br/>
+It defaults to `5000` (milliseconds) and can be any value lower than `60000`(milliseconds).
+Anything beyond the limit will result in an error response from aster server.
+
+```python
+from aster.rest_api import Client
+
+client = Client(key, secret)
+response = client.query_order('BTCUSDT', orderId=11, recvWindow=10000)
+```
+
+### Timeout
+
+`timeout` is available to be assigned with the number of seconds you find most appropriate to wait for a server response.<br/>
+Please remember the value as it won't be shown in error message _no bytes have been received on the underlying socket for timeout seconds_.<br/>
+By default, `timeout` is None. Hence, requests do not time out.
+
+```python
+from aster.rest_api import Client
+
+client= Client(timeout=1)
+```
+
+### Proxy
+proxy is supported
+
+```python
+from aster.rest_api import Client
+
+proxies = { 'https': 'http://1.2.3.4:8080' }
+
+client= Client(proxies=proxies)
+```
+
+### Response Metadata
+
+The aster API server provides weight usages in the headers of each response.
+You can display them by initializing the client with `show_limit_usage=True`:
+
+```python
+from aster.rest_api import Client
+
+client = Client(show_limit_usage=True)
+print(client.time())
+```
+
+You can also display full response metadata to help in debugging:
+
+```python
+client = Client(show_header=True)
+print(client.time())
+```
+
+If `ClientError` is received, it'll display full response meta information.
+
+### Display logs
+
+Setting the log level to `DEBUG` will log the request URL, payload and response text.
+
+### Error
+
+There are 2 types of error returned from the library:
+- `aster.error.ClientError`
+    - This is thrown when server returns `4XX`, it's an issue from client side.
+    - It has 4 properties:
+        - `status_code` - HTTP status code
+        - `error_code` - Server's error code, e.g. `-1102`
+        - `error_message` - Server's error message, e.g. `Unknown order sent.`
+        - `header` - Full response header. 
+- `aster.error.ServerError`
+    - This is thrown when server returns `5XX`, it's an issue from server side.
+
+## Websocket
+
+```python
+from aster.websocket.client.stream import WebsocketClient as Client
+
+def message_handler(message):
+    print(message)
+
+ws_client = Client()
+ws_client.start()
+
+ws_client.mini_ticker(
+    symbol='bnbusdt',
+    id=1,
+    callback=message_handler,
+)
+
+# Combine selected streams
+ws_client.instant_subscribe(
+    stream=['bnbusdt@bookTicker', 'ethusdt@bookTicker'],
+    callback=message_handler,
+)
+
+ws_client.stop()
+```
+More websocket examples are available in the `examples` folder
+
+### Heartbeat
+
+Once connected, the websocket server sends a ping frame every 3 minutes and requires a response pong frame back within
+a 10 minutes period. This package handles the pong responses automatically.
+
+
+
+================================================
+FILE: LICENSE
+================================================
+MIT License
+
+Copyright (c) 2022 andrea-c-aster
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+
+================================================
+FILE: setup.cfg
+================================================
+[metadata]
+description-file = README.md
+
+[tool:pytest]
+pep8ignore = E501
+
+[flake8]
+exclude =
+    .git,
+    .tox,
+    build,
+    dist
+max-complexity = 10
+ignore = E501, W503, W504
+
+
+
+================================================
+FILE: setup.py
+================================================
+import os
+from setuptools import setup, find_packages
+
+with open(
+    os.path.join(os.path.dirname(__file__), "requirements/common.txt"), "r"
+) as fh:
+    requirements = fh.readlines()
+
+NAME = "aster-connector-python"
+DESCRIPTION = (
+    "This is a lightweight library that works as a connector to Aster Finance public API."
+)
+AUTHOR = ""
+URL = "https://github.com/asterdex/aster-connector-python"
+VERSION = "1.1.0"
+
+about = {}
+
+with open("README.md", "r") as fh:
+    about["long_description"] = fh.read()
+
+root = os.path.abspath(os.path.dirname(__file__))
+
+if not VERSION:
+    with open(os.path.join(root, "aster", "__version__.py")) as f:
+        exec(f.read(), about)
+else:
+    about["__version__"] = VERSION
+
+setup(
+    name=NAME,
+    version=about["__version__"],
+    license="MIT",
+    description=DESCRIPTION,
+    long_description=about["long_description"],
+    long_description_content_type="text/markdown",
+    AUTHOR=AUTHOR,
+    url=URL,
+    keywords=["Aster", "Public API"],
+    install_requires=[req for req in requirements],
+    packages=find_packages(exclude=("tests",)),
+    classifiers=[
+        "Intended Audience :: Developers",
+        "Intended Audience :: Financial and Insurance Industry",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+    ],
+    python_requires=">=3.6",
+)
+
+
+
+================================================
+FILE: tox.ini
+================================================
+[tox]
+envlist = py36,py37,py38,py39
+
+[testenv]
+deps =
+    -rrequirements/requirements-test.txt
+commands =
+    pytest
+
+
+
+================================================
+FILE: aster/__init__.py
+================================================
+[Empty file]
+
+
+================================================
+FILE: aster/__version__.py
+================================================
+__version__ = "1.0.0"
+
+
+
+================================================
+FILE: aster/api.py
+================================================
+import sys
+
+import hmac
+import json
+import logging
+import hashlib
+from json import JSONDecodeError
+
+import requests
+from .__version__ import __version__
+from aster.error import ClientError, ServerError
+from aster.lib.utils import get_timestamp
+from aster.lib.utils import cleanNoneValue
+from aster.lib.utils import encoded_string
+from aster.lib.utils import check_required_parameter
+
+
+class API(object):
+    def __init__(
+        self,
+        key=None,
+        secret=None,
+        base_url=None,
+        timeout=None,
+        proxies=None,
+        show_limit_usage=False,
+        show_header=False,
+    ):
+        self.key = key
+        self.secret = secret
+        self.timeout = timeout
+        self.show_limit_usage = False
+        self.show_header = False
+        self.proxies = None
+        self.session = requests.Session()
+        self.session.headers.update(
+            {
+                "Content-Type": "application/json;charset=utf-8",
+                "User-Agent": "aster-connector/" + __version__,
+                "X-MBX-APIKEY": key,
+            }
+        )
+
+        if base_url:
+            self.base_url = base_url
+
+        if show_limit_usage is True:
+            self.show_limit_usage = True
+
+        if show_header is True:
+            self.show_header = True
+
+        if type(proxies) is dict:
+            self.proxies = proxies
+
+        return
+
+    def query(self, url_path, payload=None):
+        return self.send_request("GET", url_path, payload=payload)
+
+    def limit_request(self, http_method, url_path, payload=None):
+        """limit request is for those endpoints require API key in the header"""
+
+        check_required_parameter(self.key, "apiKey")
+        return self.send_request(http_method, url_path, payload=payload)
+
+    def sign_request(self, http_method, url_path, payload=None, special=False):
+        if payload is None:
+            payload = {}
+        payload["timestamp"] = get_timestamp()
+        query_string = self._prepare_params(payload, special)
+        signature = self._get_sign(query_string)
+        payload["signature"] = signature
+        return self.send_request(http_method, url_path, payload, special)
+
+    def limited_encoded_sign_request(self, http_method, url_path, payload=None):
+        """This is used for some endpoints has special symbol in the url.
+        In some endpoints these symbols should not encoded
+        - @
+        - [
+        - ]
+
+        so we have to append those parameters in the url
+        """
+        if payload is None:
+            payload = {}
+        payload["timestamp"] = get_timestamp()
+        query_string = self._prepare_params(payload)
+        signature = self._get_sign(query_string)
+        url_path = url_path + "?" + query_string + "&signature=" + signature
+        return self.send_request(http_method, url_path)
+
+    def send_request(self, http_method, url_path, payload=None, special=False):
+        if payload is None:
+            payload = {}
+        url = self.base_url + url_path
+        logging.debug("url: " + url)
+        params = cleanNoneValue(
+            {
+                "url": url,
+                "params": self._prepare_params(payload, special),
+                "timeout": self.timeout,
+                "proxies": self.proxies,
+            }
+        )
+        response = self._dispatch_request(http_method)(**params)
+        logging.debug("raw response from server:" + response.text)
+        self._handle_exception(response)
+
+        try:
+            data = response.json()
+        except ValueError:
+            data = response.text
+        result = {}
+
+        if self.show_limit_usage:
+            limit_usage = {}
+            for key in response.headers.keys():
+                key = key.lower()
+                if (
+                    key.startswith("x-mbx-used-weight")
+                    or key.startswith("x-mbx-order-count")
+                    or key.startswith("x-sapi-used")
+                ):
+                    limit_usage[key] = response.headers[key]
+            result["limit_usage"] = limit_usage
+
+        if self.show_header:
+            result["header"] = response.headers
+
+        if len(result) != 0:
+            result["data"] = data
+            return result
+
+        return data
+
+    def _prepare_params(self, params, special=False):
+        return encoded_string(cleanNoneValue(params),special)
+
+    def _get_sign(self, data):
+        m = hmac.new(self.secret.encode("utf-8"), data.encode("utf-8"), hashlib.sha256)
+        return m.hexdigest()
+
+    def _dispatch_request(self, http_method):
+        return {
+            "GET": self.session.get,
+            "DELETE": self.session.delete,
+            "PUT": self.session.put,
+            "POST": self.session.post,
+        }.get(http_method, "GET")
+
+    def _handle_exception(self, response):
+        status_code = response.status_code
+        if status_code < 400:
+            return
+        if 400 <= status_code < 500:
+            try:
+                err = json.loads(response.text)
+            except JSONDecodeError:
+                raise ClientError(status_code, None, response.text, response.headers)
+            raise ClientError(status_code, err["code"], err["msg"], response.headers)
+        raise ServerError(status_code, response.text)
+
+
+
+================================================
+FILE: aster/error.py
+================================================
+class Error(Exception):
+    pass
+
+
+class ClientError(Error):
+    def __init__(self, status_code, error_code, error_message, header):
+        # https status code
+        self.status_code = status_code
+        # error code returned from server
+        self.error_code = error_code
+        # error message returned from server
+        self.error_message = error_message
+        # the whole response header returned from server
+        self.header = header
+
+
+class ServerError(Error):
+    def __init__(self, status_code, message):
+        self.status_code = status_code
+        self.message = message
+
+
+class ParameterRequiredError(Error):
+    def __init__(self, params):
+        self.params = params
+
+    def __str__(self):
+        return "%s is mandatory, but received empty." % (", ".join(self.params))
+
+
+class ParameterValueError(Error):
+    def __init__(self, params):
+        self.params = params
+
+    def __str__(self):
+        return "the enum value %s is invalid." % (", ".join(self.params))
+
+
+class ParameterTypeError(Error):
+    def __init__(self, params):
+        self.params = params
+
+    def __str__(self):
+        return f"{self.params[0]} data type has to be {self.params[1]}"
+
+
+class ParameterArgumentError(Error):
+    def __init__(self, error_message):
+        self.error_message = error_message
+
+    def __str__(self):
+        return self.error_message
+
+
+
+================================================
+FILE: aster/lib/__init__.py
+================================================
+[Empty file]
+
+
+================================================
+FILE: aster/lib/enums.py
+================================================
+from enum import Enum, auto
+
+
+class AutoName(Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        return name
+
+
+class TransferType(AutoName):
+    MAIN_C2C = auto()
+    MAIN_UMFUTURE = auto()
+    MAIN_CMFUTURE = auto()
+    MAIN_MARGIN = auto()
+    MAIN_MINING = auto()
+    C2C_MAIN = auto()
+    C2C_UMFUTURE = auto()
+    C2C_MINING = auto()
+    C2C_MARGIN = auto()
+    UMFUTURE_MAIN = auto()
+    UMFUTURE_C2C = auto()
+    UMFUTURE_MARGIN = auto()
+    CMFUTURE_MAIN = auto()
+    CMFUTURE_MARGIN = auto()
+    MARGIN_MAIN = auto()
+    MARGIN_UMFUTURE = auto()
+    MARGIN_CMFUTURE = auto()
+    MARGIN_MINING = auto()
+    MARGIN_C2C = auto()
+    MINING_MAIN = auto()
+    MINING_UMFUTURE = auto()
+    MINING_C2C = auto()
+    MINING_MARGIN = auto()
+
+
+
+================================================
+FILE: aster/lib/utils.py
+================================================
+import json
+import time
+
+from urllib.parse import urlencode
+from aster.error import (
+    ParameterRequiredError,
+    ParameterValueError,
+    ParameterTypeError,
+)
+
+
+def cleanNoneValue(d) -> dict:
+    out = {}
+    for k in d.keys():
+        if d[k] is not None:
+            out[k] = d[k]
+    return out
+
+
+def check_required_parameter(value, name):
+    if not value and value != 0:
+        raise ParameterRequiredError([name])
+
+
+def check_required_parameters(params):
+    """validate multiple parameters
+    params = [
+        ['btcusdt', 'symbol'],
+        [10, 'price']
+    ]
+
+    """
+    for p in params:
+        check_required_parameter(p[0], p[1])
+
+
+def check_enum_parameter(value, enum_class):
+    if value not in set(item.value for item in enum_class):
+        raise ParameterValueError([value])
+
+
+def check_type_parameter(value, name, data_type):
+    if value is not None and type(value) != data_type:
+        raise ParameterTypeError([name, data_type])
+
+
+def get_timestamp():
+    return int(time.time() * 1000)
+
+def encoded_string(query, special = False):
+    if(special):
+        return urlencode(query).replace("%40", "@").replace('%27', '%22')
+    else:
+        return urlencode(query, True).replace("%40", "@")
+
+def convert_list_to_json_array(symbols):
+    if symbols is None:
+        return symbols
+    res = json.dumps(symbols)
+    return res.replace(" ", "")
+
+
+def config_logging(logging, logging_devel, log_file=None):
+    logging.basicConfig(level=logging_devel, filename=log_file)
+
+
+
+================================================
+FILE: aster/rest_api/__init__.py
+================================================
+from aster.api import API
+
+
+class Client(API):
+    def __init__(self, key=None, secret=None, **kwargs):
+        if "base_url" not in kwargs:
+            kwargs["base_url"] = "https://fapi.asterdex.com"
+        super().__init__(key, secret, **kwargs)
+
+    # MARKETS
+    from aster.rest_api.market import ping
+    from aster.rest_api.market import time
+    from aster.rest_api.market import exchange_info
+    from aster.rest_api.market import depth
+    from aster.rest_api.market import trades
+    from aster.rest_api.market import historical_trades
+    from aster.rest_api.market import agg_trades
+    from aster.rest_api.market import klines
+    from aster.rest_api.market import index_price_klines
+    from aster.rest_api.market import mark_price_klines
+    from aster.rest_api.market import mark_price
+    from aster.rest_api.market import funding_rate
+    from aster.rest_api.market import ticker_24hr_price_change
+    from aster.rest_api.market import ticker_price
+    from aster.rest_api.market import book_ticker
+
+    # ACCOUNT(including orders and trades)
+    from aster.rest_api.account import change_position_mode
+    from aster.rest_api.account import get_position_mode
+    from aster.rest_api.account import change_multi_asset_mode
+    from aster.rest_api.account import get_multi_asset_mode
+    from aster.rest_api.account import new_order
+    from aster.rest_api.account import new_batch_order
+    from aster.rest_api.account import query_order
+    from aster.rest_api.account import cancel_order
+    from aster.rest_api.account import cancel_open_orders
+    from aster.rest_api.account import cancel_batch_order
+    from aster.rest_api.account import countdown_cancel_order
+    from aster.rest_api.account import get_open_orders
+    from aster.rest_api.account import get_orders
+    from aster.rest_api.account import get_all_orders
+    from aster.rest_api.account import balance
+    from aster.rest_api.account import account
+    from aster.rest_api.account import change_leverage
+    from aster.rest_api.account import change_margin_type
+    from aster.rest_api.account import modify_isolated_position_margin
+    from aster.rest_api.account import get_position_margin_history
+    from aster.rest_api.account import get_position_risk
+    from aster.rest_api.account import get_account_trades
+    from aster.rest_api.account import get_income_history
+    from aster.rest_api.account import leverage_brackets
+    from aster.rest_api.account import adl_quantile
+    from aster.rest_api.account import force_orders
+    from aster.rest_api.account import commission_rate
+
+    # STREAMS
+    from aster.rest_api.data_stream_listen_key import new_listen_key
+    from aster.rest_api.data_stream_listen_key import renew_listen_key
+    from aster.rest_api.data_stream_listen_key import close_listen_key
+ 
+
+
+ 
+
+
+================================================
+FILE: aster/rest_api/account.py
+================================================
+from aster.lib.utils import check_required_parameter
+from aster.lib.utils import check_required_parameters
+
+
+def change_position_mode(self, dualSidePosition: str, **kwargs):
+    """
+    |
+    | **Change Position Mode (TRADE)**
+    | *Change user's position mode (Hedge Mode or One-way Mode) on EVERY symbol*
+
+    :API endpoint: ``POST /fapi/v1/positionSide/dual``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#change-position-modetrade
+    |
+    """
+
+    check_required_parameter(dualSidePosition, "dualSidePosition")
+    params = {"dualSidePosition": dualSidePosition, **kwargs}
+    url_path = "/fapi/v1/positionSide/dual"
+    return self.sign_request("POST", url_path, params)
+
+
+def get_position_mode(self, **kwargs):
+    """
+    |
+    | **Get Current Position Mode (USER_DATA)**
+    | *Get user's position mode (Hedge Mode or One-way Mode) on EVERY symbol*
+
+    :API endpoint: ``GET /fapi/v1/positionSide/dual``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#get-current-position-modeuser_data
+    |
+    """
+
+    params = {**kwargs}
+    url_path = "/fapi/v1/positionSide/dual"
+    return self.sign_request("GET", url_path, params)
+
+
+def change_multi_asset_mode(self, multiAssetsMargin: str, **kwargs):
+    """
+    |
+    | **Change Multi-Assets Mode (TRADE)**
+    | *Change user's Multi-Assets mode (Multi-Assets Mode or Single-Asset Mode) on Every symbol*
+
+    :API endpoint: ``POST /fapi/v1/multiAssetsMargin``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#change-multi-assets-mode-trade
+    |
+    """
+
+    check_required_parameter(multiAssetsMargin, "multiAssetsMargin")
+    params = {"multiAssetsMargin": multiAssetsMargin, **kwargs}
+    url_path = "/fapi/v1/multiAssetsMargin"
+    return self.sign_request("POST", url_path, params)
+
+
+def get_multi_asset_mode(self, **kwargs):
+    """
+    |
+    | **Get Current Multi-Assets Mode (USER_DATA)**
+    | *Get user's Multi-Assets mode (Multi-Assets Mode or Single-Asset Mode) on Every symbol*
+
+    :API endpoint: ``GET /fapi/v1/multiAssetsMargin``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#get-current-multi-assets-mode-user_data
+    |
+    """
+
+    params = {**kwargs}
+    url_path = "/fapi/v1/multiAssetsMargin"
+    return self.sign_request("GET", url_path, params)
+
+
+def new_order(self, symbol: str, side: str, type: str, **kwargs):
+    """
+    |
+    | **New Order (TRADE)**
+    | *Send in a new order.*
+
+    :API endpoint: ``POST /fapi/v1/order``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#new-order--trade
+    |
+    """
+
+    check_required_parameters([[symbol, "symbol"], [side, "side"], [type, "type"]])
+    params = {"symbol": symbol, "side": side, "type": type, **kwargs}
+    url_path = "/fapi/v1/order"
+    return self.sign_request("POST", url_path, params)
+
+
+def new_batch_order(self, batchOrders: list):
+    """
+    |
+    | **Place Multiple Orders (TRADE)**
+
+    :API endpoint: ``POST /fapi/v1/batchOrders``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#place-multiple-orders--trade
+    |
+    """
+
+    params = {"batchOrders": batchOrders}
+    url_path = "/fapi/v1/batchOrders"
+    return self.sign_request("POST", url_path, params, True)
+
+
+def query_order(self, symbol: str, orderId: int = None, origClientOrderId: str = None, **kwargs):
+    """
+    |
+    | **Query Order (USER_DATA)**
+    | *Check an order's status*
+    | *Either orderId or origClientOrderId must be sent.*
+
+    :API endpoint: ``GET /fapi/v1/order``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#query-order-user_data
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/order"
+    return self.sign_request("GET", url_path, params)
+
+
+def cancel_order(self, symbol: str, orderId: int = None, origClientOrderId: str = None, **kwargs):
+    """
+    |
+    | **Cancel Order (TRADE)**
+    | *Cancel an active order.*
+    | *Either orderId or origClientOrderId must be sent.*
+
+    :API endpoint: ``DELETE /fapi/v1/order``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#cancel-order-trade
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/order"
+    return self.sign_request("DELETE", url_path, params)
+
+
+def cancel_open_orders(self, symbol: str, **kwargs):
+    """
+    |
+    | **Cancel All Open Orders (TRADE)**
+
+    :API endpoint: ``DELETE /fapi/v1/allOpenOrders``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#cancel-all-open-orders-trade
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/allOpenOrders"
+    return self.sign_request("DELETE", url_path, params)
+
+
+def cancel_batch_order(self, symbol: str, orderIdList: list, origClientOrderIdList: list, **kwargs):
+    """
+    |
+    | **Cancel Multiple Orders (TRADE)**
+    | *Either orderIdList or origClientOrderIdList must be sent.*
+
+    :API endpoint: ``DELETE /fapi/v1/batchOrders``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#cancel-multiple-orders-trade
+    |
+    """
+    
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/batchOrders"
+    return self.sign_request("DELETE", url_path, params)
+
+
+def countdown_cancel_order(self, symbol: str, countdownTime: int, **kwargs):
+    """
+    |
+    | **Auto-Cancel All Open Orders (TRADE)**
+    | *Cancel all open orders of the specified symbol at the end of the specified countdown.*
+
+    :API endpoint: ``POST /fapi/v1/countdownCancelAll``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#auto-cancel-all-open-orders-trade
+    |
+    """
+    
+    check_required_parameters([[symbol, "symbol"], [countdownTime, "countdownTime"]])
+    params = {"symbol": symbol, "countdownTime": countdownTime, **kwargs}
+    url_path = "/fapi/v1/countdownCancelAll"
+    return self.sign_request("POST", url_path, params)
+
+
+def get_open_orders(self, symbol: str, orderId: int = None, origClientOrderId: str = None, **kwargs):
+    """
+    |
+    | **Query Current Open Order (USER_DATA)**
+    | *EitherorderId or origClientOrderId must be sent.*
+
+    :API endpoint: ``GET /fapi/v1/openOrder``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#query-current-open-order-user_data
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/openOrder"
+    return self.sign_request("GET", url_path, params)
+
+
+def get_orders(self, **kwargs):
+    """
+    |
+    | **Current All Open Orders (USER_DATA)**
+    | *Get all open orders on a symbol. Careful when accessing this with no symbol.*
+    | *If the symbol is not sent, orders for all symbols will be returned in an array.*
+
+    :API endpoint: ``GET /fapi/v1/openOrders``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#current-all-open-orders-user_data
+    |
+    """
+
+    params = { **kwargs }
+    url_path = "/fapi/v1/openOrders"
+    return self.sign_request("GET", url_path, params)
+
+
+def get_all_orders(self, symbol: str, **kwargs):
+    """
+    |
+    | **All Orders (USER_DATA)**
+    | *Get all account orders; active, canceled, or filled.*
+
+    :API endpoint: ``GET /fapi/v1/allOrders``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#all-orders-user_data
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/allOrders"
+    return self.sign_request("GET", url_path, params)
+
+
+def balance(self, **kwargs):
+    """
+    |
+    | **Futures Account Balance V2 (USER_DATA)**
+
+    :API endpoint: ``GET /fapi/v2/balance``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#futures-account-balance-v2-user_data
+    |
+    """
+
+    url_path = "/fapi/v2/balance"
+    return self.sign_request("GET", url_path, {**kwargs})
+
+
+def account(self, **kwargs):
+    """
+    |
+    | **Account Information V2 (USER_DATA)**
+    | *Get current account information. User in single-asset/ multi-assets mode will see different value, see comments in response section for detail.*
+
+    :API endpoint: ``GET /fapi/v2/account``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#account-information-v2-user_data
+    |
+    """
+
+    url_path = "/fapi/v2/account"
+    return self.sign_request("GET", url_path, {**kwargs})
+
+
+def change_leverage(self, symbol: str, leverage: int, **kwargs):
+    """
+    |
+    | **Change Initial Leverage (TRADE)**
+    | *Change user's initial leverage of specific symbol market.*
+
+    :API endpoint: ``POST /fapi/v1/leverage``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#change-initial-leverage-trade
+    |
+    """
+
+    check_required_parameters([[symbol, "symbol"],[leverage, "leverage"]])
+    params = {"symbol": symbol, "leverage":leverage, **kwargs}
+    url_path = "/fapi/v1/leverage"
+    return self.sign_request("POST", url_path, params)
+
+
+def change_margin_type(self, symbol: str, marginType: str, **kwargs):
+    """
+    |
+    | **Change margin type (TRADE)**
+
+    :API endpoint: ``POST /fapi/v1/marginType``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#change-margin-type-trade
+    |
+    """
+
+    check_required_parameters([[symbol, "symbol"],[marginType, "marginType"]])    
+    params = {"symbol": symbol, "marginType": marginType, **kwargs}
+    url_path = "/fapi/v1/marginType"
+    return self.sign_request("POST", url_path, params)
+
+
+def modify_isolated_position_margin(self, symbol: str, amount: float, type: int, **kwargs):
+    """
+    |
+    | **Modify Isolated Position Margin (TRADE)**
+
+    :API endpoint: ``POST /fapi/v1/positionMargin``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#modify-isolated-position-margin-trade
+    |
+    """
+
+    check_required_parameters([[symbol, "symbol"], [amount, "amount"], [type, "type"]])
+    params = {"symbol": symbol, "amount":amount, "type":type, **kwargs}
+    url_path = "/fapi/v1/positionMargin"
+    return self.sign_request("POST", url_path, params)
+
+
+def get_position_margin_history(self, symbol: str, **kwargs):
+    """
+    |
+    | **Get Position Margin Change History (TRADE)**
+
+    :API endpoint: ``GET /fapi/v1/positionMargin/history``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#get-position-margin-change-history-trade
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/positionMargin/history"
+    return self.sign_request("GET", url_path, params)
+
+
+def get_position_risk(self, **kwargs):
+    """
+    |
+    | **Position Information V2 (USER_DATA)**
+    | *Get current position information.*
+
+    :API endpoint: ``GET /fapi/v2/positionRisk``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#position-information-v2-user_data
+    |
+    """
+    params = {**kwargs}
+    url_path = "/fapi/v2/positionRisk"
+    return self.sign_request("GET", url_path, params)
+
+
+def get_account_trades(self, symbol: str, **kwargs):
+    """
+    |
+    | **Account Trade List (USER_DATA)**
+    | *Get trades for a specific account and symbol.*
+
+    :API endpoint: ``GET /fapi/v1/userTrades``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#account-trade-list-user_data
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/userTrades"
+    return self.sign_request("GET", url_path, params)
+
+
+def get_income_history(self, **kwargs):
+    """
+    |
+    | **Get Income History (USER_DATA)**
+
+    :API endpoint: ``GET /fapi/v1/income``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#get-income-historyuser_data
+    |
+    """
+
+    params = {**kwargs}
+    url_path = "/fapi/v1/income"
+    return self.sign_request("GET", url_path, params)
+
+
+def leverage_brackets(self, **kwargs):
+    """
+    |
+    | **Notional and Leverage Brackets (USER_DATA)**
+
+    :API endpoint: ``GET /fapi/v1/leverageBracket``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#notional-and-leverage-brackets-user_data
+    |
+    """
+
+    params = {**kwargs}
+    url_path = "/fapi/v1/leverageBracket"
+    return self.sign_request("GET", url_path, params)
+
+
+def adl_quantile(self, **kwargs):
+    """
+    |
+    | **Position ADL Quantile Estimation (USER_DATA)**
+
+    :API endpoint: ``GET /fapi/v1/adlQuantile``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#position-adl-quantile-estimation-user_data
+    |
+    """
+
+    params = {**kwargs}
+    url_path = "/fapi/v1/adlQuantile"
+    return self.sign_request("GET", url_path, params)
+
+
+def force_orders(self, **kwargs):
+    """
+    |
+    | **User's Force Orders (USER_DATA)**
+
+    :API endpoint: ``GET /fapi/v1/forceOrders``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#users-force-orders-user_data
+    |
+    """
+
+    params = {**kwargs}
+    url_path = "/fapi/v1/forceOrders"
+    return self.sign_request("GET", url_path, params)
+
+
+def commission_rate(self, symbol: str, **kwargs):
+    """
+    |
+    | **User Commission Rate (USER_DATA)**
+
+    :API endpoint: ``GET /fapi/v1/commissionRate``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#user-commission-rate-user_data
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol":symbol, **kwargs}
+    url_path = "/fapi/v1/commissionRate"
+    return self.sign_request("GET", url_path, params)
+
+
+
+================================================
+FILE: aster/rest_api/data_stream_listen_key.py
+================================================
+from aster.lib.utils import check_required_parameter
+
+
+def new_listen_key(self):
+    """
+    |
+    | **Create a ListenKey (USER_STREAM)**
+
+    :API endpoint: ``POST /fapi/v1/listenKey``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#start-user-data-stream-user_stream
+    |
+    """
+
+    url_path = "/fapi/v1/listenKey"
+    return self.send_request("POST", url_path)
+
+
+def renew_listen_key(self, listenKey: str):
+    """
+    |
+    | **Ping/Keep-alive a ListenKey (USER_STREAM)**
+
+    :API endpoint: ``PUT /fapi/v1/listenKey``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/-finance-api.md#keepalive-user-data-stream-user_stream
+    |
+    """
+    
+    check_required_parameter(listenKey, "listenKey")
+    url_path = "/fapi/v1/listenKey"
+    return self.send_request("PUT", url_path, {"listenKey": listenKey})
+
+
+def close_listen_key(self, listenKey: str):
+    """
+    |
+    | **Close a ListenKey (USER_STREAM)**
+
+    :API endpoint: ``DELETE /fapi/v1/listenKey``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#close-user-data-stream-user_stream
+    |
+    """
+
+    url_path = "/fapi/v1/listenKey"
+    return self.send_request("DELETE", url_path)
+
+
+
+
+
+================================================
+FILE: aster/rest_api/market.py
+================================================
+from aster.lib.utils import check_required_parameter
+from aster.lib.utils import check_required_parameters
+
+
+def ping(self):
+    """
+    |
+    | **Test Connectivity**
+    | *Test connectivity to the Rest API.*
+
+    :API endpoint: ``GET /fapi/v1/ping``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#test-connectivity
+    |
+    """
+
+    url_path = "/fapi/v1/ping"
+    return self.query(url_path)
+
+
+def time(self):
+    """
+    |
+    | **Check Server Time**
+    | *Test connectivity to the Rest API and get the current server time.*
+
+    :API endpoint: ``GET /fapi/v1/time``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#check-server-time
+    |
+    """
+
+    url_path = "/fapi/v1/time"
+    return self.query(url_path)
+
+
+def exchange_info(self):
+    """
+    |
+    | **Exchange Information**
+    | *Current exchange trading rules and symbol information.*
+
+    :API endpoint: ``GET /fapi/v1/exchangeInfo``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#exchange-information
+    |
+    """
+
+    url_path = "/fapi/v1/exchangeInfo"
+    return self.query(url_path)
+
+
+def depth(self, symbol: str, **kwargs):
+    """
+    |
+    | **Order Book**
+
+    :API endpoint: ``GET /fapi/v1/depth``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#order-book
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/depth"
+    return self.query(url_path, params)
+
+
+def trades(self, symbol: str, **kwargs):
+    """
+    |
+    | **Recent Trades List**
+    | *Get recent market trades*
+
+    :API endpoint: ``GET /fapi/v1/trades``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#recent-trades-list
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/trades"
+    return self.query(url_path, params)
+
+
+def historical_trades(self, symbol: str, **kwargs):
+    """
+    |
+    | **Old Trade Lookup (MARKET_DATA)**
+    | *Get older market historical trades.*
+
+    :API endpoint: ``GET /fapi/v1/historicalTrades``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#old-trades-lookup-market_data
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/historicalTrades"
+    return self.limit_request("GET", url_path, params)
+
+
+def agg_trades(self, symbol: str, **kwargs):
+    """
+    |
+    | **Compressed/Aggregate Trades List**
+    | *Get compressed, aggregate market trades. Market trades that fill at the time, from the same order, with the same price will have the quantity aggregated.*
+    
+    :API endpoint: ``GET /fapi/v1/aggTrades``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#compressedaggregate-trades-list
+    |
+    """
+
+    check_required_parameter(symbol, "symbol")
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/aggTrades"
+    return self.query(url_path, params)
+
+
+def klines(self, symbol: str, interval: str, **kwargs):
+    """
+    |
+    | **Kline/Candlestick Data**
+    | *Kline/candlestick bars for a symbol. Klines are uniquely identified by their open time.*
+
+    :API endpoint: ``GET /fapi/v1/klines``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#klinecandlestick-data
+    |
+    """
+
+    check_required_parameters([[symbol, "symbol"], [interval, "interval"]])
+    params = {"symbol": symbol, "interval": interval, **kwargs}
+    url_path = "/fapi/v1/klines"
+    return self.query(url_path, params)
+
+
+def index_price_klines(self, pair: str, interval: str, **kwargs):
+    """
+    |
+    | **Index Price Kline/Candlestick Data**
+    | *Kline/Candlestick Data for the index price of a pair.*
+    | *Klines are uniquely identified by their open time.*   
+    
+    :API endpoint: ``GET /fapi/v1/indexPriceKlines``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#index-price-klinecandlestick-data
+    |
+    """
+
+    check_required_parameters([[pair, "pair"], [interval, "interval"]])
+    params = {"pair": pair, "interval": interval, **kwargs}
+    url_path = "/fapi/v1/indexPriceKlines"
+    return self.query(url_path, params)
+
+
+def mark_price_klines(self, symbol: str, interval: str, **kwargs):
+    """
+    |
+    | **Mark Price Kline/Candlestick Data**
+    | *Kline/candlestick bars for the mark price of a symbol.*
+    | *Klines are uniquely identified by their open time.*
+    
+    :API endpoint: ``GET /fapi/v1/markPriceKlines``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#mark-price-klinecandlestick-data
+    |
+    """
+
+    check_required_parameters([[symbol, "symbol"], [interval, "interval"]])
+    params = {"symbol": symbol, "interval": interval, **kwargs}
+    url_path = "/fapi/v1/markPriceKlines"
+    return self.query(url_path, params)
+
+
+def mark_price(self, symbol: str = None):
+    """
+    |
+    | **Mark Price**
+    | *Mark Price and Funding Rate*
+
+    :API endpoint: ``GET /fapi/v1/premiumIndex``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#mark-price
+    |
+    """
+
+    params = {"symbol": symbol}
+    url_path = "/fapi/v1/premiumIndex"
+    return self.query(url_path, params)
+
+
+def funding_rate(self, symbol: str = None,  **kwargs):
+    """
+    |
+    | **Get Funding Rate History**
+
+    :API endpoint: ``GET /fapi/v1/fundingRate``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#get-funding-rate-history
+    |
+    """
+    
+    params = {"symbol": symbol, **kwargs}
+    url_path = "/fapi/v1/fundingRate"
+    return self.query(url_path, params)
+
+
+def ticker_24hr_price_change(self, symbol: str = None):
+    """
+    |
+    | **24hr Ticker Price Change Statistics**
+    | *24 hour rolling window price change statistics.*
+    | *Careful when accessing this with no symbol. If the symbol is not sent, tickers for all symbols will be returned in an array.*
+
+    :API endpoint: ``GET /fapi/v1/ticker/24hr``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#24hr-ticker-price-change-statistics
+    |
+    """
+
+    params = {"symbol": symbol}
+    url_path = "/fapi/v1/ticker/24hr"
+    return self.query(url_path, params)
+
+
+def ticker_price(self, symbol: str = None):
+    """
+    |
+    | **Symbol Price Ticker**
+    | *Latest price for a symbol or symbols.*
+    | *If the symbol is not sent, prices for all symbols will be returned in an array.*
+
+    :API endpoint: ``GET /fapi/v1/ticker/price``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#symbol-price-ticker
+    |
+    """
+
+    params = {"symbol": symbol}
+    url_path = "/fapi/v1/ticker/price"
+    return self.query(url_path, params)
+
+
+def book_ticker(self, symbol: str = None):
+    """
+    |
+    | **Symbol Order Book Ticker**
+    | *Best price/qty on the order book for a symbol or symbols.*
+    | *If the symbol is not sent, prices for all symbols will be returned in an array.*
+
+    :API endpoint: ``GET /fapi/v1/ticker/bookTicker``
+    :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#symbol-order-book-ticker
+    |
+    """
+
+    params = {"symbol": symbol}
+    url_path = "/fapi/v1/ticker/bookTicker"
+    return self.query(url_path, params)
+
+
+
+================================================
+FILE: aster/websocket/__init__.py
+================================================
+[Empty file]
+
+
+================================================
+FILE: aster/websocket/aster_client_factory.py
+================================================
+import logging
+from autobahn.twisted.websocket import WebSocketClientFactory
+from twisted.internet.protocol import ReconnectingClientFactory
+from aster.websocket.aster_client_protocol import AsterClientProtocol
+
+
+class AsterReconnectingClientFactory(ReconnectingClientFactory):
+
+    initialDelay = 0.1
+    maxDelay = 10
+    maxRetries = 10
+
+
+class AsterClientFactory(WebSocketClientFactory, AsterReconnectingClientFactory):
+    def __init__(self, *args, payload=None, **kwargs):
+        WebSocketClientFactory.__init__(self, *args, **kwargs)
+        self.protocol_instance = None
+        self.base_client = None
+        self.payload = payload
+
+    _reconnect_error_payload = {"e": "error", "m": "Max reconnect retries reached"}
+
+    def startedConnecting(self, connector):
+        logging.info("Start to connect....")
+
+    def clientConnectionFailed(self, connector, reason):
+        logging.error(
+            "Can't connect to server. Reason: {}. Retrying: {}".format(
+                reason, self.retries + 1
+            )
+        )
+        self.retry(connector)
+        if self.retries > self.maxRetries:
+            self.callback(self._reconnect_error_payload)
+
+    def clientConnectionLost(self, connector, reason):
+        logging.error(
+            "Lost connection to Server. Reason: {}. Retrying: {}".format(
+                reason, self.retries + 1
+            )
+        )
+        self.retry(connector)
+        if self.retries > self.maxRetries:
+            self.callback(self._reconnect_error_payload)
+
+    def buildProtocol(self, addr):
+        return AsterClientProtocol(self, payload=self.payload)
+
+
+
+================================================
+FILE: aster/websocket/aster_client_protocol.py
+================================================
+import json
+import logging
+from autobahn.twisted.websocket import WebSocketClientProtocol
+
+
+class AsterClientProtocol(WebSocketClientProtocol):
+    def __init__(self, factory, payload=None):
+        super().__init__()
+        self.factory = factory
+        self.payload = payload
+
+    def onOpen(self):
+        self.factory.protocol_instance = self
+
+    def onConnect(self, response):
+        logging.info("Server connected")
+        if self.payload:
+            logging.info("Sending message to Server: {}".format(self.payload))
+            self.sendMessage(self.payload, isBinary=False)
+        # reset the delay after reconnecting
+        self.factory.resetDelay()
+
+    def onMessage(self, payload, isBinary):
+        if not isBinary:
+            try:
+                payload_obj = json.loads(payload.decode("utf8"))
+            except ValueError:
+                pass
+            else:
+                self.factory.callback(payload_obj)
+
+    def onClose(self, wasClean, code, reason):
+        logging.warn(
+            "WebSocket connection closed: {0}, code: {1}, clean: {2}, reason: {0}".format(
+                reason, code, wasClean
+            )
+        )
+
+    def onPing(self, payload):
+        logging.info("Received Ping from server")
+        self.sendPong()
+        logging.info("Responded Pong to server")
+
+    def onPong(self, payload):
+        logging.info("Received Pong from server")
+
+
+
+================================================
+FILE: aster/websocket/aster_socket_manager.py
+================================================
+import json
+import logging
+import threading
+from urllib.parse import urlparse
+from twisted.internet import reactor, ssl
+from twisted.internet.error import ReactorAlreadyRunning
+from autobahn.twisted.websocket import WebSocketClientFactory, connectWS
+from aster.websocket.aster_client_protocol import AsterClientProtocol
+from aster.websocket.aster_client_factory import AsterClientFactory
+
+
+class AsterSocketManager(threading.Thread):
+    def __init__(self, stream_url):
+        threading.Thread.__init__(self)
+
+        self.factories = {}
+        self._connected_event = threading.Event()
+        self.stream_url = stream_url
+        self._conns = {}
+        self._user_callback = None
+
+    def _start_socket(
+        self, stream_name, payload, callback, is_combined=False, is_live=True
+    ):
+        if stream_name in self._conns:
+            return False
+
+        if is_combined:
+            factory_url = self.stream_url + "/stream"
+        else:
+            factory_url = self.stream_url + "/ws"
+
+        if not is_live:
+            payload_obj = json.loads(payload.decode("utf8"))
+
+            if is_combined:
+                factory_url = factory_url + "?streams=" + payload_obj["params"]
+            else:
+                factory_url = factory_url + "/" + payload_obj["params"]
+            payload = None
+
+        logging.info("Connection with URL: {}".format(factory_url))
+
+        factory = AsterClientFactory(factory_url, payload=payload)
+        factory.base_client = self
+        factory.protocol = AsterClientProtocol
+        factory.setProtocolOptions(
+            openHandshakeTimeout=5, autoPingInterval=300, autoPingTimeout=5
+        )
+        factory.callback = callback
+        self.factories[stream_name] = factory
+        reactor.callFromThread(self.add_connection, stream_name, self.stream_url)
+
+    def add_connection(self, stream_name, url):
+        if not url.startswith("wss://"):
+            raise ValueError("expected wss:// URL prefix")
+
+        factory = self.factories[stream_name]
+        options = ssl.optionsForClientTLS(hostname=urlparse(url).hostname)
+        self._conns[stream_name] = connectWS(factory, options)
+
+    def stop_socket(self, conn_key):
+        if conn_key not in self._conns:
+            return
+
+        # disable reconnecting if we are closing
+        self._conns[conn_key].factory = WebSocketClientFactory(self.stream_url)
+        self._conns[conn_key].disconnect()
+        del self._conns[conn_key]
+
+    def run(self):
+        try:
+            reactor.run(installSignalHandlers=False)
+        except ReactorAlreadyRunning:
+            # Ignore error about reactor already running
+            pass
+
+    def close(self):
+        keys = set(self._conns.keys())
+        for key in keys:
+            self.stop_socket(key)
+        self._conns = {}
+
+
+
+================================================
+FILE: aster/websocket/websocket_client.py
+================================================
+import json
+from twisted.internet import reactor
+from aster.websocket.aster_socket_manager import AsterSocketManager
+
+
+class AsterWebsocketClient(AsterSocketManager):
+    def __init__(self, stream_url):
+        super().__init__(stream_url)
+
+    def stop(self):
+        try:
+            self.close()
+        finally:
+            reactor.stop()
+
+    def _single_stream(self, stream):
+        if isinstance(stream, str):
+            return True
+        elif isinstance(stream, list):
+            return False
+        else:
+            raise ValueError("Invalid stream name, expect string or array")
+
+    def live_subscribe(self, stream, id, callback, **kwargs):
+        combined = False
+        if self._single_stream(stream):
+            stream = [stream]
+        else:
+            combined = True
+
+        data = {"method": "SUBSCRIBE", "params": stream, "id": id}
+
+        data.update(**kwargs)
+        payload = json.dumps(data, ensure_ascii=False).encode("utf8")
+        stream_name = "-".join(stream)
+        return self._start_socket(
+            stream_name, payload, callback, is_combined=combined, is_live=True
+        )
+
+    def instant_subscribe(self, stream, callback, **kwargs):
+        combined = False
+        if not self._single_stream(stream):
+            combined = True
+            stream = "/".join(stream)
+
+        data = {"method": "SUBSCRIBE", "params": stream}
+
+        data.update(**kwargs)
+        payload = json.dumps(data, ensure_ascii=False).encode("utf8")
+        stream_name = "-".join(stream)
+        return self._start_socket(
+            stream_name, payload, callback, is_combined=combined, is_live=False
+        )
+
+
+
+================================================
+FILE: aster/websocket/client/__init__.py
+================================================
+[Empty file]
+
+
+================================================
+FILE: aster/websocket/client/stream.py
+================================================
+from aster.websocket.websocket_client import AsterWebsocketClient
+
+
+class WebsocketClient(AsterWebsocketClient):
+    def __init__(self, stream_url="wss://fstream.asterdex.com"):
+        super().__init__(stream_url)
+
+    def agg_trade(self, symbol: str, id: int, callback, **kwargs):
+        """
+        | **Aggregate Trade Stream**
+        | *The Aggregate Trade Streams push market trade information that is aggregated for a single taker order every 100 milliseconds.*
+        
+        :Stream name: ``<symbol>@aggTrade``
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#aggregate-trade-streams
+        """
+
+        self.live_subscribe(
+            "{}@aggTrade".format(symbol.lower()), id, callback, **kwargs
+        )
+
+    def mark_price(self, symbol: str, id: int, callback, speed=None, **kwargs):
+        """
+        | **Mark Price Stream**
+        | *Mark price and funding rate for a single symbol pushed every 3 seconds or every second.*
+        
+        :Stream name: ``<symbol>@markPrice`` or ``<symbol>@markPrice@1s``
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#mark-price-stream
+        """
+
+        if speed is None:
+            self.live_subscribe(
+                "{}@markPrice".format(symbol.lower()), id, callback, **kwargs
+            )
+        else:
+            self.live_subscribe(
+                "{}@markPrice@{}s".format(symbol.lower(), speed), id, callback, **kwargs
+            )
+
+    def mark_price_all_market(self, id: int, callback, speed=None, **kwargs):
+        """
+        | **Mark Price Stream for All market**
+        | *Mark price and funding rate for all symbols pushed every 3 seconds or every second.*
+        
+        :Stream name: ``!markPrice@arr`` or ``!markPrice@arr@1s``
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#mark-price-stream-for-all-market
+        """
+        if speed is None:
+            self.live_subscribe("{!markPrice@arr", id, callback, **kwargs)
+        else:
+            self.live_subscribe(
+                "{!markPrice@arr@{}s".format(speed), id, callback, **kwargs
+            )
+
+    def kline(self, symbol: str, id: int, interval: str, callback, **kwargs):
+        """
+        | **Kline/Candlestick Streams**
+        | *The Kline/Candlestick Stream push updates to the current klines/candlestick every 250 milliseconds (if existing).*
+        
+        :Stream name: ``<symbol>@kline_<interval>``
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#klinecandlestick-streams
+        """
+
+        self.live_subscribe(
+            "{}@kline_{}".format(symbol.lower(), interval), id, callback, **kwargs
+        )      
+
+    def mini_ticker(self, id: int, callback, symbol=None, **kwargs):
+        """
+        | **Individual Symbol or All Market Mini Ticker Stream**
+        | *24hr rolling window mini-ticker statistics for a single symbol or all market. These are NOT the statistics of the UTC day, but a 24hr rolling window from requestTime to 24hrs before.*
+        
+        :Stream name: ``<symbol>@miniTicker``
+        :Stream name: ``!miniTicker@arr``
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#individual-symbol-mini-ticker-stream
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#all-market-mini-tickers-stream
+        """
+
+        if symbol is None:
+            self.live_subscribe("!miniTicker@arr", id, callback, **kwargs)
+        else:
+            self.live_subscribe(
+                "{}@miniTicker".format(symbol.lower()), id, callback, **kwargs
+            )
+
+    def ticker(self, id: int, callback, symbol=None, **kwargs):
+        """
+        | **Individual Symbol or All Market Ticker Streams**
+        | *24hr rollwing window ticker statistics for a single symbol or all market. These are NOT the statistics of the UTC day, but a 24hr rolling window from requestTime to 24hrs before.*
+        
+        :Stream name: ``<symbol>@ticker``
+        :Stream name: ``!ticker@arr``
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#individual-symbol-ticker-streams
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#all-market-tickers-streams
+        """
+
+        if symbol is None:
+            self.live_subscribe("!ticker@arr", id, callback, **kwargs)
+        else:
+            self.live_subscribe(
+                "{}@ticker".format(symbol.lower()), id, callback, **kwargs
+            )
+
+    def book_ticker(self, id: int, callback, symbol=None, **kwargs):
+        """
+        | **Individual Symbol or All Market Book Ticker Streams**
+        | *Pushes any update to the best bid or ask's price or quantity in real-time for a specified symbol or all market.*
+        
+        :Stream name: ``<symbol>@bookTicker``
+        :Stream name: ``!bookTicker``
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#individual-symbol-book-ticker-streams
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#all-book-tickers-stream
+        """
+
+        if symbol is None:
+            self.live_subscribe("!bookTicker", id, callback, **kwargs)
+        else:
+            self.live_subscribe(
+                "{}@bookTicker".format(symbol.lower()), id, callback, **kwargs
+            )
+
+    def liquidation_order(self, id: int, callback, symbol=None, **kwargs):
+        """
+        | **Liquidation Order Streams**
+        | *The Liquidation Order Snapshot Streams push force liquidation order information for specific symbol or all market.*
+        
+        :Stream name: ``<symbol>@forceOrder``
+        :Stream name: ``!forceOrder@arr``
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#liquidation-order-streams
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#all-market-liquidation-order-streams
+        """
+
+        if symbol is None:
+            self.live_subscribe("!forceOrder@arr", id, callback, **kwargs)
+        else:
+            self.live_subscribe(
+                "{}@forceOrder".format(symbol.lower()), id, callback, **kwargs
+            )
+
+    def partial_book_depth(self, symbol: str, id: int, level, speed, callback, **kwargs):
+        """
+        | **Partial Book Depth Streams**
+        | *Top <levels> bids and asks, Valid <levels> are 5, 10, or 20. Valid <speed> are 250, 500, or 100*
+        
+        :Stream name: ``<symbol>@depth<levels>`` or ``<symbol>@depth<levels>@500ms`` or ``<symbol>@depth<levels>@100ms``
+        :Doc: https://github.com/asterdex/api-docss/blob/master/aster-finance-api.md#partial-book-depth-streams
+        """
+
+        self.live_subscribe(
+            "{}@depth{}@{}ms".format(symbol.lower(), level, speed), id, callback, **kwargs
+        )
+
+    def diff_book_depth(self, symbol: str, id: int, speed, callback, **kwargs):
+        """
+        | **Diff. Book Depth Streams**
+        | *Bids and asks, pushed every 250 milliseconds, 500 milliseconds, 100 milliseconds (if existing)*
+        
+        :Stream name: ``<symbol>@depth`` or ``<symbol>@depth@500ms`` or ``<symbol>@depth@100ms``
+        :Doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#diff-book-depth-streams
+        """
+
+        self.live_subscribe(
+            "{}@depth@{}ms".format(symbol.lower(), speed), id, callback, **kwargs
+        )
+
+    def user_data(self, listen_key: str, id: int, callback, **kwargs):
+        """listen to user data by provided listenkey"""
+        self.live_subscribe(listen_key, id, callback, **kwargs)
+
+
+================================================
+FILE: examples/rest_api/data_stream_listen_key/close_listen_key.py
+================================================
+#!/usr/bin/env python
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+
+client = Client(key, base_url="https://fapi.asterdex.com")
+logging.info(client.close_listen_key(""))
+
+
+
+================================================
+FILE: examples/rest_api/data_stream_listen_key/new_listen_key.py
+================================================
+#!/usr/bin/env python
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+
+client = Client(key, base_url="https://fapi.asterdex.com")
+logging.info(client.new_listen_key())
+
+
+
+================================================
+FILE: examples/rest_api/data_stream_listen_key/renew_listen_key.py
+================================================
+#!/usr/bin/env python
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+
+client = Client(key, base_url="https://fapi.asterdex.com")
+logging.info(client.renew_listen_key(""))
+
+
+
+================================================
+FILE: examples/rest_api/market/agg_trades.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.agg_trades("BTCUSDT"))
+
+
+
+
+
+
+
+
+
+
+================================================
+FILE: examples/rest_api/market/book_ticker.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.book_ticker("BTCUSDT"))
+
+
+
+================================================
+FILE: examples/rest_api/market/depth.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.depth("BTCUSDT", **{"limit":5}))
+
+
+
+================================================
+FILE: examples/rest_api/market/exchange_info.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.exchange_info())
+
+
+
+================================================
+FILE: examples/rest_api/market/funding_rate.py
+================================================
+from aster.rest_api import Client
+import logging
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.funding_rate("BTCUSDT",**{'limit':100}))
+
+
+
+
+
+================================================
+FILE: examples/rest_api/market/historical_trades.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+
+# historical_trades requires api key in request header
+client = Client(key = key)
+logging.info(client.historical_trades("BTCUSDT", **{"limit" : 10}))
+
+
+================================================
+FILE: examples/rest_api/market/index_price_kline.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.index_price_klines("BTCUSDT", "1d", **{"limit": 500}))
+
+
+================================================
+FILE: examples/rest_api/market/klines.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.klines("BTCUSDT", "1d"))
+
+
+
+
+================================================
+FILE: examples/rest_api/market/mark_price.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.mark_price("BTCUSDT"))
+
+
+================================================
+FILE: examples/rest_api/market/mark_price_klines.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.mark_price_klines("BTCUSDT", "1d", **{"limit": 500}))
+
+
+================================================
+FILE: examples/rest_api/market/ping.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.ping())
+
+
+
+================================================
+FILE: examples/rest_api/market/ticker_24hr_price_change.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.ticker_24hr_price_change("BTCUSDT"))
+
+
+================================================
+FILE: examples/rest_api/market/ticker_price.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.ticker_price("BTCUSDT"))
+
+
+
+================================================
+FILE: examples/rest_api/market/time.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.time())
+
+
+================================================
+FILE: examples/rest_api/market/trades.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+
+config_logging(logging, logging.DEBUG)
+
+client = Client()
+logging.info(client.trades("BTCUSDT", limit=500))
+
+
+
+================================================
+FILE: examples/rest_api/trade/cancel_batch_orders.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.cancel_batch_order(symbol = "BTCUSDT", orderIdList=[1234567,2345678], origClientOrderIdList=[1234567,2345678], recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/cancel_open_orders.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.cancel_open_orders(symbol = "BTCUSDT", recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+
+================================================
+FILE: examples/rest_api/trade/cancel_order.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.cancel_order(symbol = "BTCUSDT", orderId=123456, recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+
+================================================
+FILE: examples/rest_api/trade/change_leverage.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.change_leverage(symbol='BTCUSDT',leverage = 2, recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/change_margin_type.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.change_margin_type(symbol='BTCUSDT',marginType="ISOLATED",recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/change_multi_asset_mode.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.change_multi_asset_mode(multiAssetsMargin="true", recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/change_position_mode.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.change_position_mode(dualSidePosition = "true", recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/countdown_cancel_order.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.countdown_cancel_order(symbol = "BTCUSDT",countdownTime=1000, recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_account.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.account(recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_account_trades.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.get_account_trades(symbol = "BTCUSDT", recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_adl_quantile.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.adl_quantile(symbol="BTCUSDT", recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_all_orders.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.get_all_orders(symbol = "BTCUSDT", recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+
+================================================
+FILE: examples/rest_api/trade/get_balance.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.balance(recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_commission_rate.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.commission_rate(symbol='BTCUSDT',recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_force_orders.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.force_orders(recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_income_history.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.get_income_history(recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_leverage_brackets.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.leverage_brackets(symbol="BTCUSDT", recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_multi_asset_mode.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.get_multi_asset_mode(recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_open_orders.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.get_open_orders(symbol = "BTCUSDT", orderId=35298599362, recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+
+================================================
+FILE: examples/rest_api/trade/get_order.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.get_orders(symbol = "BTCUSDT", recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+
+================================================
+FILE: examples/rest_api/trade/get_position_margin_history.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+try:
+    response = client.get_position_margin_history(symbol='BTCUSDT',recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/get_position_mode.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.get_position_mode(recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+
+================================================
+FILE: examples/rest_api/trade/get_position_risk.py
+================================================
+import logging
+from aster.rest_api import  Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+try:
+    response = client.get_position_risk(recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/modify_isolated_position_margin.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret,base_url="https://fapi.asterdex.com")
+try:
+    response = client.modify_isolated_position_margin(symbol='BTCUSDT', amount = 100, type = 1, recvWindow=6000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/rest_api/trade/new_batch_order.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+params = [
+        {
+            "symbol":"BTCUSDT",
+            "side": "BUY",
+            "type": "LIMIT",
+            "quantity": "0.001",
+            "timeInForce": "GTC",
+            "price": "60000.1"
+        }
+]
+
+try:
+    response = client.new_batch_order(params)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+
+
+
+
+================================================
+FILE: examples/rest_api/trade/new_order.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.new_order(symbol="BTCUSDT", side = "SELL", type= "LIMIT", quantity= 0.001, timeInForce="GTC", price= 59808.02)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+
+================================================
+FILE: examples/rest_api/trade/query_order.py
+================================================
+import logging
+from aster.rest_api import Client
+from aster.lib.utils import config_logging
+from aster.error import ClientError
+
+config_logging(logging, logging.DEBUG)
+
+key = ""
+secret = ""
+
+client = Client(key, secret, base_url="https://fapi.asterdex.com")
+
+try:
+    response = client.query_order(symbol = "BTCUSDT", orderId = 12345678,recvWindow=2000)
+    logging.info(response)
+except ClientError as error:
+    logging.error(
+        "Found error. status: {}, error code: {}, error message: {}".format(
+            error.status_code, error.error_code, error.error_message
+        )
+    )
+
+
+================================================
+FILE: examples/websocket/agg_trade.py
+================================================
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.websocket.client.stream import WebsocketClient as Client
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+my_client = Client()
+my_client.start()
+
+my_client.agg_trade(
+    symbol="btcusdt",
+    id=1,
+    callback=message_handler,
+)
+
+time.sleep(2)
+
+my_client.agg_trade(
+    symbol="ethusdt",
+    id=1,
+    callback=message_handler,
+)
+
+logging.debug("closing ws connection")
+my_client.stop()
+
+
+
+================================================
+FILE: examples/websocket/book_ticker.py
+================================================
+
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.websocket.client.stream import WebsocketClient as Client
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+my_client = Client()
+my_client.start()
+
+my_client.book_ticker(
+    id=13,
+    callback=message_handler,
+    symbol="btcusdt",
+)
+
+time.sleep(2)
+
+logging.debug("closing ws connection")
+my_client.stop()
+
+
+================================================
+FILE: examples/websocket/diff_book_depth.py
+================================================
+
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.websocket.client.stream import WebsocketClient as Client
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+my_client = Client()
+my_client.start()
+
+my_client.diff_book_depth(
+    symbol="btcusdt",
+    speed=100,
+    id=1,
+    callback=message_handler,
+)
+
+time.sleep(2)
+
+logging.debug("closing ws connection")
+my_client.stop()
+
+
+
+================================================
+FILE: examples/websocket/kline.py
+================================================
+
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.websocket.client.stream import WebsocketClient as Client
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+my_client = Client()
+my_client.start()
+
+my_client.kline(
+    symbol="btcusdt",
+    id=12,
+    interval='1d',
+    callback=message_handler,
+)
+
+time.sleep(2)
+
+logging.debug("closing ws connection")
+my_client.stop()
+
+
+================================================
+FILE: examples/websocket/liquidation_order.py
+================================================
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.websocket.client.stream import WebsocketClient as Client
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+my_client = Client()
+my_client.start()
+
+my_client.liquidation_order(
+    id=13,
+    callback=message_handler,
+)
+
+time.sleep(2)
+
+logging.debug("closing ws connection")
+my_client.stop()
+
+
+
+================================================
+FILE: examples/websocket/mark_price.py
+================================================
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.websocket.client.stream import WebsocketClient as Client
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+my_client = Client()
+my_client.start()
+
+my_client.mark_price(
+    symbol="btcusdt",
+    id=13,
+    speed=1,
+    callback=message_handler,
+)
+
+time.sleep(2)
+
+logging.debug("closing ws connection")
+my_client.stop()
+
+
+
+================================================
+FILE: examples/websocket/mini_ticker.py
+================================================
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.websocket.client.stream import WebsocketClient as Client
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+my_client = Client()
+my_client.start()
+
+my_client.mini_ticker(
+    id=1,
+    callback=message_handler,
+    symbol="btcusdt"
+)
+
+time.sleep(2)
+
+logging.debug("closing ws connection")
+my_client.stop()
+
+
+
+================================================
+FILE: examples/websocket/partial_book_depth.py
+================================================
+
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.websocket.client.stream import WebsocketClient as Client
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+my_client = Client()
+my_client.start()
+
+my_client.partial_book_depth(
+    symbol="bnbusdt",
+    id=1,
+    level=10,
+    speed=100,
+    callback=message_handler,
+)
+
+time.sleep(2)
+
+logging.debug("closing ws connection")
+my_client.stop()
+
+
+
+================================================
+FILE: examples/websocket/ticker.py
+================================================
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.websocket.client.stream import WebsocketClient as Client
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+my_client = Client()
+my_client.start()
+
+my_client.ticker(
+    id=13,
+    callback=message_handler,
+    symbol="btcusdt",
+)
+
+time.sleep(2)
+
+logging.debug("closing ws connection")
+my_client.stop()
+
+
+================================================
+FILE: examples/websocket/user_data.py
+================================================
+import time
+import logging
+from aster.lib.utils import config_logging
+from aster.rest_api import Futures as Client
+from aster.websocket.client.stream import WebsocketClient
+
+config_logging(logging, logging.DEBUG)
+
+def message_handler(message):
+    print(message)
+
+api_key = ""
+client = Client(api_key)
+response = client.new_listen_key()
+
+logging.info("Receving listen key : {}".format(response["listenKey"]))
+
+ws_client = WebsocketClient()
+ws_client.start()
+
+ws_client.user_data(
+    listen_key=response["listenKey"],
+    id=1,
+    callback=message_handler,
+)
+
+time.sleep(30)
+
+logging.debug("closing ws connection")
+ws_client.stop()
+
+
+
+================================================
+FILE: requirements/common.txt
+================================================
+autobahn>=21.2.1
+Twisted>=22.2.0
+requests>=2.25.1
+pyOpenSSL>=19.0.0
+service-identity>=21.1.0
+
+
+================================================
+FILE: requirements/requirements-dev.txt
+================================================
+-r requirements-test.txt
+pre-commit
+sphinx
+sphinx_rtd_theme
+
+
+================================================
+FILE: requirements/requirements-test.txt
+================================================
+-r common.txt
+pytest-cov==2.8.1
+pytest==5.4.1
+sure==1.4.11
+responses==0.10.12
+pytest-pep8==1.0.6
+black
+flake8
+tox
+tox-pyenv
+wheel
+
+
+
+================================================
+FILE: requirements/requirements.txt
+================================================
+-r common.txt
+
