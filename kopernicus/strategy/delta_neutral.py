@@ -27,7 +27,8 @@ class DeltaNeutralStrategy:
         self.symbol = settings.trading_pairs[0]  # Start with BTCUSDT
         
         # Initialize leverage
-        self.client.set_leverage(self.symbol, settings.leverage)
+        # TODO: Fix API timestamp issue
+        # self.client.set_leverage(self.symbol, settings.leverage)
         
         # Strategy state
         self.active_positions: Dict[str, Dict] = {}  # position_side -> position data

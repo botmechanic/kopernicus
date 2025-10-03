@@ -69,8 +69,8 @@ class API(object):
         payload["timestamp"] = get_timestamp()
         query_string = self._prepare_params(payload, special)
         signature = self._get_sign(query_string)
-        payload["signature"] = signature
-        return self.send_request(http_method, url_path, payload, special)
+        url_path = url_path + "?" + query_string + "&signature=" + signature
+        return self.send_request(http_method, url_path)
 
     def limited_encoded_sign_request(self, http_method, url_path, payload=None):
         """This is used for some endpoints has special symbol in the url.

@@ -61,7 +61,14 @@ class AsterExchangeClient:
         """Get current mark price"""
         try:
             data = self.client.mark_price(symbol=symbol)
-            return float(data['markPrice'])
+            # Handle both single object and list responses
+            if isinstance(data, list):
+                for item in data:
+                    if item['symbol'] == symbol:
+                        return float(item['markPrice'])
+                raise ValueError(f"Symbol {symbol} not found in response")
+            else:
+                return float(data['markPrice'])
         except (ClientError, ServerError) as e:
             logger.error(f"Failed to get mark price: {e}")
             raise
