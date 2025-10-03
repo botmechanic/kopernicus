@@ -42,15 +42,21 @@ class AsterExchangeClient:
     ) -> Dict[str, Any]:
         """Place a market order (taker for 2x points)"""
         try:
-            order = self.client.new_order(
-                symbol=symbol,
-                side=side,
-                type="MARKET",
-                quantity=quantity,
-                positionSide=position_side,
-                reduceOnly=reduce_only,
-                newOrderRespType="RESULT"
-            )
+            # Only include reduceOnly parameter if it's True
+            order_params = {
+                "symbol": symbol,
+                "side": side,
+                "type": "MARKET",
+                "quantity": quantity,
+                "positionSide": position_side,
+                "newOrderRespType": "RESULT"
+            }
+            
+            # Only add reduceOnly if it's True
+            if reduce_only:
+                order_params["reduceOnly"] = reduce_only
+                
+            order = self.client.new_order(**order_params)
             logger.info(f"Order placed: {symbol} {side} {quantity} {position_side} | OrderID: {order['orderId']}")
             return order
         except ClientError as e:
@@ -88,6 +94,19 @@ class AsterExchangeClient:
             else:
                 raise
     
+    def set_position_mode(self, dual_side_position: bool):
+        """Set position mode (hedge mode or one-way mode)"""
+        try:
+            result = self.client.change_position_mode(
+                dualSidePosition="true" if dual_side_position else "false"
+            )
+            mode = "hedge" if dual_side_position else "one-way"
+            logger.info(f"Position mode set to: {mode}")
+            return result
+        except Exception as e:
+            logger.error(f"Failed to set position mode: {e}")
+            raise
+
     def close_position(self, symbol: str, position_side: str) -> Dict[str, Any]:
         """Close an entire position"""
         positions = self.get_position_risk(symbol=symbol)

@@ -26,9 +26,15 @@ class DeltaNeutralStrategy:
         self.risk_manager = RiskManager()
         self.symbol = settings.trading_pairs[0]  # Start with BTCUSDT
         
-        # Initialize leverage
-        # TODO: Fix API timestamp issue
-        # self.client.set_leverage(self.symbol, settings.leverage)
+        # Initialize leverage and position mode
+        try:
+            self.client.set_leverage(self.symbol, settings.leverage)
+            # Set position mode to hedge mode for delta-neutral trading
+            self.client.set_position_mode(True)  # True = hedge mode
+            logger.info(f"✅ Leverage set to {settings.leverage}x, position mode set to hedge")
+        except Exception as e:
+            logger.warning(f"Could not set leverage/position mode: {e}")
+            # Continue anyway - these might already be set
         
         # Strategy state
         self.active_positions: Dict[str, Dict] = {}  # position_side -> position data
