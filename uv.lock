@@ -160,7 +160,7 @@ wheels = [
 ]
 
 [[package]]
-name = "kopernicus"
+name = "octopus"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-KoPernicus - Delta-Neutral Trading Bot for Aster DEX
+Octopus - Delta-Neutral Trading Bot for Aster DEX
 """
 import time
 from loguru import logger
-from kopernicus.database.db import init_db
-from kopernicus.strategy.delta_neutral import DeltaNeutralStrategy
-from kopernicus.config.settings import settings
+from octopus.database.db import init_db
+from octopus.strategy.delta_neutral import DeltaNeutralStrategy
+from octopus.config.settings import settings
 
 def setup_logging():
     """Configure logging"""
     logger.add(
-        "logs/kopernicus_{time}.log",
+        "logs/octopus_{time}.log",
         rotation="1 day",
         retention="30 days",
         level="INFO"
@@ -21,7 +21,7 @@ def main():
     """Main bot loop"""
     setup_logging()
     logger.info("=" * 60)
-    logger.info("🚀 KoPernicus Starting...")
+    logger.info("🚀 Octopus Starting...")
     logger.info(f"Capital: ${settings.capital_usdt}")
     logger.info(f"Leverage: {settings.leverage}x")
     logger.info(f"Target Daily Volume: ${settings.daily_volume_target}")

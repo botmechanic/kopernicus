@@ -1,5 +1,5 @@
 [project]
-name = "kopernicus"
+name = "octopus"
 version = "0.1.0"
 description = "Delta-neutral trading bot for Aster DEX perpetual futures"
 readme = "README.md"

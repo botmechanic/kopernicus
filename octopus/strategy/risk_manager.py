@@ -1,5 +1,5 @@
 from loguru import logger
-from kopernicus.config.settings import settings
+from octopus.config.settings import settings
 from typing import Dict, Any
 
 class RiskManager:

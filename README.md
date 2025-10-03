@@ -1,6 +1,6 @@
-# 🚀 KoPernicus - Delta-Neutral Trading Bot for Aster DEX
+# 🚀 Octopus - Delta-Neutral Trading Bot for Aster DEX
 
-KoPernicus is an algorithmic trading bot designed for Aster DEX perpetual futures, implementing a delta-neutral "Hold-and-Rotate" strategy to generate volume for Aster Genesis Stage 3.
+Octopus is an algorithmic trading bot designed for Aster DEX perpetual futures, implementing a delta-neutral "Hold-and-Rotate" strategy to generate volume for Aster Genesis Stage 3.
 
 ## 🎯 Features
 
@@ -24,7 +24,7 @@ KoPernicus is an algorithmic trading bot designed for Aster DEX perpetual future
 
 ```bash
 # Clone and navigate to project
-cd kopernicus
+cd octopus
 
 # Install dependencies
 uv sync
@@ -84,8 +84,8 @@ uv run python main.py
 ## 📁 Project Structure
 
 ```
-kopernicus/
-├── kopernicus/
+octopus/
+├── octopus/
 │   ├── config/
 │   │   └── settings.py          # Configuration management
 │   ├── exchange/
@@ -128,11 +128,11 @@ kopernicus/
 
 ### Logs
 
-Bot logs are stored in `logs/kopernicus_YYYY-MM-DD.log` with daily rotation.
+Bot logs are stored in `logs/octopus_YYYY-MM-DD.log` with daily rotation.
 
 ### Database
 
-SQLite database (`kopernicus.db`) contains:
+SQLite database (`octopus.db`) contains:
 
 - **Trades**: All executed orders with timestamps
 - **Positions**: Position lifecycle tracking
@@ -142,13 +142,13 @@ SQLite database (`kopernicus.db`) contains:
 
 ```bash
 # Check today's volume
-sqlite3 kopernicus.db "SELECT SUM(notional) FROM trades WHERE date(timestamp) = date('now')"
+sqlite3 octopus.db "SELECT SUM(notional) FROM trades WHERE date(timestamp) = date('now')"
 
 # Check position hold times
-sqlite3 kopernicus.db "SELECT AVG(hold_time_minutes) FROM positions WHERE closed_at IS NOT NULL"
+sqlite3 octopus.db "SELECT AVG(hold_time_minutes) FROM positions WHERE closed_at IS NOT NULL"
 
 # Check PnL
-sqlite3 kopernicus.db "SELECT SUM(realized_pnl) FROM trades"
+sqlite3 octopus.db "SELECT SUM(realized_pnl) FROM trades"
 ```
 
 ## 🚨 Risk Warnings

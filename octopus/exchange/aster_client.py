@@ -1,8 +1,8 @@
 from loguru import logger
 from typing import Optional, Dict, Any
-from kopernicus.config.settings import settings
-from kopernicus.exchange.aster.rest_api import Client as AsterClient
-from kopernicus.exchange.aster.error import ClientError, ServerError
+from octopus.config.settings import settings
+from octopus.exchange.aster.rest_api import Client as AsterClient
+from octopus.exchange.aster.error import ClientError, ServerError
 
 class AsterExchangeClient:
     """High-level wrapper around Aster's official Python SDK"""

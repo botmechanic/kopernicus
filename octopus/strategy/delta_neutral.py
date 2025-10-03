@@ -4,11 +4,11 @@ from typing import Optional, List, Dict, Any
 import time
 import random
 
-from kopernicus.config.settings import settings
-from kopernicus.exchange.aster_client import AsterExchangeClient
-from kopernicus.strategy.risk_manager import RiskManager
-from kopernicus.database.db import get_db
-from kopernicus.database.models import Trade, Position
+from octopus.config.settings import settings
+from octopus.exchange.aster_client import AsterExchangeClient
+from octopus.strategy.risk_manager import RiskManager
+from octopus.database.db import get_db
+from octopus.database.models import Trade, Position
 
 class DeltaNeutralStrategy:
     """

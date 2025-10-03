@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     funding_rate_threshold: float = 0.05
     
     # Database
-    db_path: str = "kopernicus.db"
+    db_path: str = "octopus.db"
     
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

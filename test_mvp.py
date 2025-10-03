@@ -1,9 +1,9 @@
 """Quick MVP validation tests"""
-from kopernicus.config.settings import settings
-from kopernicus.exchange.aster_client import AsterExchangeClient
-from kopernicus.database.db import init_db, get_db
-from kopernicus.database.models import Trade
-from kopernicus.strategy.risk_manager import RiskManager
+from octopus.config.settings import settings
+from octopus.exchange.aster_client import AsterExchangeClient
+from octopus.database.db import init_db, get_db
+from octopus.database.models import Trade
+from octopus.strategy.risk_manager import RiskManager
 
 def test_connection():
     """Test Aster API connection"""

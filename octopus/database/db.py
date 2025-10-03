@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from kopernicus.config.settings import settings
-from kopernicus.database.models import Base
+from octopus.config.settings import settings
+from octopus.database.models import Base
 from contextlib import contextmanager
 from loguru import logger
 
